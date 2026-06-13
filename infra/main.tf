@@ -39,3 +39,11 @@ module "dms" {
   target_username = var.db_username
   target_password = var.db_password
 }
+
+module "route53" {
+  source = "./modules/route53"
+  namespace = local.namespace
+
+  #Azure Traffic Manager DNS 이름
+  azure_endpoint = var.azure_endpoint
+}

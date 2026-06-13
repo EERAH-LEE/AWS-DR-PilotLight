@@ -25,3 +25,8 @@ variable "azure_mysql_password" {
   type      = string
   sensitive = true
 }
+
+#Azure Traffic Manager DNS
+variable "azure_endpoint" {
+  type = string
+}

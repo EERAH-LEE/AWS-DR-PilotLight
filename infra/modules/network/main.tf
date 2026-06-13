@@ -54,3 +54,4 @@ resource "aws_route_table" "public" {
     Name = "rt-${var.namespace}-public"
   }
 }
+
