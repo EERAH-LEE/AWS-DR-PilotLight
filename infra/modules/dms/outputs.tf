@@ -12,3 +12,8 @@ output "source_endpoint_arn" {
 output "target_endpoint_arn" {
     value = aws_dms_endpoint.target.endpoint_arn
 }
+
+#복제 태스크 ARN - 나중에 태스크 시작/중지 시 참조용
+output "replication_task_arn" {
+  value = aws_dms_replication_task.main.replication_task_arn
+}
