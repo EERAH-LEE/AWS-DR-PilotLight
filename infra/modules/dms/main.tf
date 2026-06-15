@@ -67,12 +67,12 @@ resource "aws_dms_endpoint" "target" {
 resource "aws_dms_replication_task" "main" {
   replication_task_id      = "task-${var.namespace}"
   migration_type           = "full-load-and-cdc"                                          #초기 전체복사 후 변경분 지속 복제 (change data capture)
-  replication_instance_arn = "aws_dms_replication_instance.main.replication_instance_arn" #위에서 만드 복제 인스턴스 연결
+  replication_instance_arn = aws_dms_replication_instance.main.replication_instance_arn #위에서 만드 복제 인스턴스 연결
   source_endpoint_arn      = aws_dms_endpoint.source.endpoint_arn                         #Azure MySQL 엔드포인트 연결   
   target_endpoint_arn      = aws_dms_endpoint.target.endpoint_arn                         #AWS RDS 엔드포인트 연결
 
   #어떤 테이블을 복제할지 JSON으로 정의 (테이블 매핑 규칙)
-  table_mappings = jsondecode({
+  table_mappings = jsonencode({
     rules = [{                    #json 구조라서 필드명에 - 들어감
       rule-type   = "selection"   # 테이블 선택(단순복제라 셀렉션써야함)
       rule-id     = "1"           #이 규칙의 번호 (여러 개면 1,2,3 ...)
@@ -86,7 +86,7 @@ resource "aws_dms_replication_task" "main" {
   })
 
   #복제 태스크 세부 동작 설정
-  replication_task_settings = jsondecode({
+  replication_task_settings = jsonencode({
     TargetMetadata = {
       SupportLobs        = true  #LOB(이미지 등 대용량 데이터)지원
       FullLobMode        = false #LOB 전체 모드 off (크기 제한 모드 사용)

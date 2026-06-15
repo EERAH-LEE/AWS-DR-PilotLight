@@ -47,3 +47,35 @@ module "route53" {
   #Azure Traffic Manager DNS 이름
   azure_endpoint = var.azure_endpoint
 }
+
+module "s3" {
+  source    = "./modules/s3"
+  namespace = local.namespace
+}
+
+module "cloudfront" {
+  source    = "./modules/cloudfront"
+  namespace = local.namespace
+
+  # s3 모듈에서 받아오는 버킷 정보
+  bucket_name            = module.s3.bucket_name
+  bucket_arn             = module.s3.bucket_arn
+  bucket_regional_domain = module.s3.bucket_regional_domain
+
+  # 평상시엔 비워둠 - DR 시 EKS ALB DNS 값으로 채움
+  eks_alb_dns = ""
+}
+
+module "vpn" {
+  source    = "./modules/vpn"
+  namespace = local.namespace
+
+  vpc_id                 = module.network.vpc_id
+  private_route_table_id = module.network.private_route_table_id
+
+  # Azure VPN Gateway 퍼블릭 IP
+  azure_vpn_gateway_ip = var.azure_vpn_gateway_ip
+
+  # Azure VNet CIDR (MySQL이 속한 대역)
+  azure_vnet_cidr = var.azure_vnet_cidr
+}

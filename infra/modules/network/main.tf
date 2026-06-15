@@ -55,3 +55,22 @@ resource "aws_route_table" "public" {
   }
 }
 
+# -----------------------------------------------
+# EKS/DMS용 프라이빗 라우팅 테이블
+# 퍼블릭 RT와 분리 → VPN 경로 전파를 여기에만 적용
+# -----------------------------------------------
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "rt-${var.namespace}-private"
+  }
+}
+
+# EKS 서브넷 2개를 프라이빗 RT에 연결
+resource "aws_route_table_association" "eks" {
+  count          = 2
+  subnet_id      = aws_subnet.eks[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+

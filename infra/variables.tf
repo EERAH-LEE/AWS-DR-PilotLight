@@ -30,3 +30,11 @@ variable "azure_mysql_password" {
 variable "azure_endpoint" {
   type = string
 }
+
+variable "azure_vpn_gateway_ip" {
+  type = string
+}
+
+variable "azure_vnet_cidr" {
+  type = string
+}

@@ -20,17 +20,17 @@ resource "aws_cloudfront_origin_access_control" "cf-s3" {
 resource "aws_s3_bucket_policy" "cf-s3" {
   bucket = var.bucket_name
 
-  policy = jsondecode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Service = "CloudFront.amazonaws.com" } #CloudFront 서비스만
+      Principal = { Service = "cloudfront.amazonaws.com" } #CloudFront 서비스만
       Action    = "s3:GetObject"                           #읽기만 허용
-      resource  = "${var.bucket_arn}/*"                    #버킷 내 모든 파일
+      Resource  = "${var.bucket_arn}/*"                    #버킷 내 모든 파일
       Condition = {
         StringEquals = {
           # 이 CloudFront 배포에서 오는 요청만 허용
-          "AWS:SourceArn" = aws_cloudfront_distribution.main.SourceArn
+          "AWS:SourceArn" = aws_cloudfront_distribution.main.arn
         }
       }
     }]
@@ -58,8 +58,8 @@ resource "aws_cloudfront_distribution" "main" {
   dynamic "origin" {
     for_each = var.eks_alb_dns != "" ? [1] : []
     content {
-      origin_id   = "eks-alb=origin"
-      domain_name = "var.eks_alb_dns"
+      origin_id   = "eks-alb-origin"
+      domain_name = var.eks_alb_dns
       custom_origin_config {
         http_port              = 80
         https_port             = 443

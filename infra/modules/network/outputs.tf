@@ -12,3 +12,7 @@ output "eks_subnet_ids" {
 output "rds_subnet_ids" {
   value = aws_subnet.rds[*].id
 }
+
+output "private_route_table_id" {
+  value = aws_route_table.private.id
+}
