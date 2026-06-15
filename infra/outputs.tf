@@ -12,3 +12,8 @@ output "vpn_tunnel_ip" {
 output "cloudfront_domain" {
   value = module.cloudfront.cloudfront_domain
 }
+
+output "vpn_psk" {
+  value     = module.vpn.psk
+  sensitive = true
+}
