@@ -23,6 +23,29 @@ module "security" {
     vpc_id = module.network.vpc_id
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+
+  namespace          = local.namespace
+  repository_names   = var.ecr_repository_names
+  image_scan_on_push = var.ecr_image_scan_on_push
+}
+
+module "eks" {
+  source = "./modules/eks"
+
+  namespace                 = local.namespace
+  kubernetes_version        = var.eks_kubernetes_version
+  endpoint_public_access    = var.eks_endpoint_public_access
+  endpoint_private_access   = var.eks_endpoint_private_access
+  public_access_cidrs       = var.eks_public_access_cidrs
+  cluster_service_ipv4_cidr = var.eks_service_cidr
+  subnet_ids                = module.network.eks_subnet_ids
+  cluster_security_group_id = module.security.eks_cluster_sg_id
+  node_security_group_id    = module.security.eks_node_sg_id
+  node_groups               = var.eks_node_groups
+}
+
 module "rds" {
   source = "./modules/rds"
   namespace = local.namespace
@@ -62,6 +85,7 @@ module "route53" {
   azure_endpoint = var.azure_endpoint
 }
 
+
 module "s3" {
   source    = "./modules/s3"
   namespace = local.namespace
@@ -93,3 +117,4 @@ module "vpn" {
   # Azure VNet CIDR (MySQL이 속한 대역)
   azure_vnet_cidr = var.azure_vnet_cidr
 }
+
