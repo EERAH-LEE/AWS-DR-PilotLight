@@ -1,6 +1,6 @@
 #RDS 엔드포인트 - DMS 모듈에서 타켓 연결 시 사용
 output "rds_endpoint" {
-  value = aws_db_instance.main.endpoint
+  value = aws_db_instance.main.address
 }
 
 #RDS 포트
