@@ -1,3 +1,17 @@
+# Azure Blob에서 state 읽기
+data "terraform_remote_state" "azure" {
+  backend = "azurerm"
+  config = {
+    resource_group_name  = "rg-azsis-kbeauty-blob"
+    storage_account_name = "azsiskbeautytfstate"
+    container_name       = "tfstate"
+    key                  = "dev/terraform.tfstate"
+  }
+}
+
+#-----------------------------------------------------------
+
+
 module "network" {
     source = "./modules/network"
     namespace = local.namespace
@@ -30,7 +44,7 @@ module "dms" {
   subnet_ids = module.network.eks_subnet_ids
 
   # 소스: Azure MySQL
-  source_host     = var.azure_mysql_host
+  source_host     = data.external.azure_mysql_ip.result.ip # var.azure_mysql_host 대체
   source_username = var.azure_mysql_username
   source_password = var.azure_mysql_password
 
@@ -74,7 +88,7 @@ module "vpn" {
   private_route_table_id = module.network.private_route_table_id
 
   # Azure VPN Gateway 퍼블릭 IP
-  azure_vpn_gateway_ip = var.azure_vpn_gateway_ip
+  azure_vpn_gateway_ip = data.terraform_remote_state.azure.outputs.vpn_gateway_public_ip  # var.azure_vpn_gateway_ip 대체
 
   # Azure VNet CIDR (MySQL이 속한 대역)
   azure_vnet_cidr = var.azure_vnet_cidr
