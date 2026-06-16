@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-green
+  namespace: app-web
+  labels:
+    app: web
+    color: green
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+      color: green
+  template:
+    metadata:
+      labels:
+        app: web
+        color: green
+    spec:
+      nodeSelector:
+        workload: app
+        purpose: web-was
+      containers:
+        - name: web
+          image: 946775837287.dkr.ecr.ap-northeast-2.amazonaws.com/azsis-kbeauty-dr/web-green:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80

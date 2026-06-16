@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-active
+  namespace: app-web
+spec:
+  type: ClusterIP
+  selector:
+    app: web
+    color: blue   #처음엔 블루로 진행 
+  ports:
+    - port: 80
+      targetPort: 80

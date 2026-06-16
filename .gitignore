@@ -3,3 +3,5 @@
 *.tfstate.backup
 .terraform/
 .terraform.lock.hcl
+infra/dr/k8s/was/db-secret.yaml
+infra/dr/k8s/was/redis-secret.yaml

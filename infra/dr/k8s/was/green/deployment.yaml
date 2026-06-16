@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: was-green
+  namespace: app-was
+  labels:
+    app: was
+    color: green
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: was
+      color: green
+  template:
+    metadata:
+      labels:
+        app: was
+        color: green
+    spec:
+      nodeSelector:
+        workload: app
+        purpose: web-was
+      containers:
+        - name: was
+          image: 946775837287.dkr.ecr.ap-northeast-2.amazonaws.com/azsis-kbeauty-dr/was-green:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                 secretKeyRef:
+                  name: db-secret
+                  key: db-url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                 secretKeyRef:
+                   name: db-secret
+                   key: db-user
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                 secretKeyRef:
+                   name: db-secret
+                   key: db-password
+
+            - name: SPRING_SESSION_STORE_TYPE
+              value: redis
+            - name: SPRING_SESSION_REDIS_NAMESPACE
+              value: kbeauty:session
+            - name: SERVER_SERVLET_SESSION_TIMEOUT
+              value: 30m
+            - name: SPRING_DATA_REDIS_HOST
+              valueFrom:
+                 secretKeyRef:
+                   name: redis-secret
+                   key: redis-host
+            - name: SPRING_DATA_REDIS_PORT
+              valueFrom:
+                 secretKeyRef:
+                   name: redis-secret
+                   key: redis-ssl-port
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                 secretKeyRef:
+                   name: redis-secret
+                   key: redis-password
+            - name: SPRING_DATA_REDIS_SSL_ENABLED
+              value: "true"
