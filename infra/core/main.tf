@@ -58,12 +58,14 @@ module "cloudfront" {
   eks_alb_dns = ""
 }
 
-#module "vpn" {
-#  source    = "./modules/vpn"
-#  namespace = local.namespace
-#
-#  vpc_id                 = module.network.vpc_id
-#  private_route_table_id = module.network.private_route_table_id
-#  azure_vpn_gateway_ip   = var.azure_vpn_gateway_ip
-#  azure_vnet_cidr        = var.azure_vnet_cidr
-#}
+module "vpn" {
+  source    = "./modules/vpn"
+  namespace = local.namespace
+
+  vpc_id                 = module.network.vpc_id
+  private_route_table_id = module.network.private_route_table_id
+  azure_vpn_gateway_ip   = var.azure_vpn_gateway_ip
+  azure_vnet_cidr        = var.azure_vnet_cidr
+
+  count = var.azure_vpn_gateway_ip != "" ? 1 : 0
+}

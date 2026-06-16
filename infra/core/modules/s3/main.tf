@@ -1,6 +1,7 @@
 #s3 버킷 - DR 발동 시 ESK 올라오는 동안 보여줄 정적 점검 페이지 호스팅
 resource "aws_s3_bucket" "dr-webpage" {
   bucket = local.bucket_name
+  force_destroy = true       #aws정책상 s3 안에 오브젝트 남아있으면 삭제가 안됨 그래서 저렇게 걸어놓음.
 
   tags = {
     Name = local.bucket_name
