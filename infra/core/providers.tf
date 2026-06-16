@@ -11,7 +11,7 @@ terraform {
   }
   backend "s3" {
     bucket = "tfstate-azsis-kbeauty"      # S3 버킷 이름
-    key    = "aws/terraform.tfstate"
+    key    = "aws/core/terraform.tfstate"
     region = "ap-northeast-2"
   }
 }
