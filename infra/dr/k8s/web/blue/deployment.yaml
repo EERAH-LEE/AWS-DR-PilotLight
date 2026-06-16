@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-blue
+  namespace: app-web
+  labels:
+    app: web
+    color: blue
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+      color: blue
+  template:
+    metadata:
+      labels:
+        app: web
+        color: blue
+    spec:
+      nodeSelector:
+        workload: app
+        purpose: web-was
+      containers:
+        - name: web
+          image: 946775837287.dkr.ecr.ap-northeast-2.amazonaws.com/azsis-kbeauty-dr/web-blue:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
