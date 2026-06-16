@@ -1,0 +1,13 @@
+resources:
+  - namespace.yaml
+  - web/blue/deployment.yaml
+  - web/blue/service.yaml
+  - web/green/deployment.yaml
+  - web/green/service.yaml
+  - web/service-active.yaml
+  - web/ingress.yaml
+  - was/blue/deployment.yaml
+  - was/blue/service.yaml
+  - was/green/deployment.yaml
+  - was/green/service.yaml
+  - was/service-active.yaml
