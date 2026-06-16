@@ -5,6 +5,7 @@ resources:
   - web/green/deployment.yaml
   - web/green/service.yaml
   - web/service-active.yaml
+  - web/ingress.yaml
   - was/blue/deployment.yaml
   - was/blue/service.yaml
   - was/green/deployment.yaml
