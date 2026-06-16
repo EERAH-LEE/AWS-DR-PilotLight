@@ -63,24 +63,3 @@ resource "aws_vpn_gateway_route_propagation" "eks" {
   vpn_gateway_id = aws_vpn_gateway.main.id
   route_table_id = var.private_route_table_id
 }
-
-
-# PSK 자동 생성
-resource "random_password" "vpn_psk" {
-  length  = 32
-  special = false   # VPN PSK는 영숫자만 허용
-}
-
-#테라폼 어플라이시도로 중복내용 잠시 주석처리함 -가영
-#resource "aws_vpn_connection" "azure" {
-#  vpn_gateway_id      = aws_vpn_gateway.main.id
-#  customer_gateway_id = aws_customer_gateway.azure.id
-#  type                = "ipsec.1"
-#  static_routes_only  = true
-#
-#  tunnel1_preshared_key = random_password.vpn_psk.result  # PSK 직접 지정
-#
-#  tags = {
-#    Name = "vpn-${var.namespace}-azure"
-#  }
-#}
