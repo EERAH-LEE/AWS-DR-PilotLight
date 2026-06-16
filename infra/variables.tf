@@ -38,6 +38,7 @@ variable "azure_vpn_gateway_ip" {
 
 variable "azure_vnet_cidr" {
   type = string
+}
 
 variable "ecr_repository_names" {
   description = "ECR repositories for blue/green web and WAS images."

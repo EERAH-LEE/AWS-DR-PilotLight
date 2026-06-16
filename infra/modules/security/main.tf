@@ -45,13 +45,14 @@ resource "aws_security_group" "eks_cluster" {
     name = "nsg-${var.namespace}-eks-cluster"
     vpc_id = var.vpc_id
 
-    ingress {
-        from_port = 443
-        to_port = 443
-        protocol = "tcp"
-        security_groups = [aws_security_group.eks_node.id]
-        description = "Kubernetes API from EKS worker nodes"
-    }
+#어플라이테스트때문에 잠시 주석처리함 -가영
+#    ingress {
+#        from_port = 443
+#        to_port = 443
+#        protocol = "tcp"
+#        security_groups = [aws_security_group.eks_node.id]
+#        description = "Kubernetes API from EKS worker nodes"
+#    }
 
     egress {
         from_port = 0
@@ -77,14 +78,14 @@ resource "aws_security_group" "eks_node" {
         self = true
         description = "Node-to-node traffic"
     }
-
-    ingress {
-        from_port = 1025
-        to_port = 65535
-        protocol = "tcp"
-        security_groups = [aws_security_group.eks_cluster.id]
-        description = "Control plane to kubelet and pods"
-    }
+#어플라이테스트때문에 잠시 주석처리함 -가영
+#    ingress {
+#        from_port = 1025
+#        to_port = 65535
+#        protocol = "tcp"
+#        security_groups = [aws_security_group.eks_cluster.id]
+#        description = "Control plane to kubelet and pods"
+#    }
 
     ingress {
         from_port = 80
@@ -112,4 +113,25 @@ resource "aws_security_group" "eks_node" {
     tags = {
         Name = "nsg-${var.namespace}-eks-node"
     }
+}
+
+#cycle 에러로 밑에 두개 잠깐 추가함 어플라이진행용 -가영
+resource "aws_security_group_rule" "eks_cluster_ingress_from_nodes" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_cluster.id
+  source_security_group_id = aws_security_group.eks_node.id
+  description              = "Kubernetes API from EKS worker nodes"
+}
+
+resource "aws_security_group_rule" "eks_node_ingress_from_cluster" {
+  type                     = "ingress"
+  from_port                = 1025
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.eks_node.id
+  source_security_group_id = aws_security_group.eks_cluster.id
+  description              = "Control plane to kubelet and pods"
 }
