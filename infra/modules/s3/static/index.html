@@ -1,51 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>서비스 점검 중 | K-Beauty</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f8f4f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      color: #333;
-    }
-    .container {
-      text-align: center;
-      padding: 60px 40px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      max-width: 480px;
-      width: 90%;
-    }
-    .icon { font-size: 64px; margin-bottom: 24px; }
-    h1 { font-size: 28px; font-weight: 700; margin-bottom: 12px; color: #222; }
-    p { font-size: 16px; color: #666; line-height: 1.6; margin-bottom: 8px; }
-    .badge {
-      display: inline-block;
-      margin-top: 24px;
-      padding: 6px 16px;
-      background: #f0e8ff;
-      color: #7c3aed;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="icon">🛠️</div>
-    <h1>서비스 점검 중입니다</h1>
-    <p>더 나은 서비스를 위해 시스템을 점검하고 있습니다.</p>
-    <p>잠시 후 다시 이용해 주세요.</p>
-    <span class="badge">DR 복구 진행 중</span>
-  </div>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>K-GLOW BEAUTY | 서비스 점검 안내</title>
+    <style>
+      :root {
+        --ink: #171717;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --surface: #ffffff;
+        --soft: #eff6ff;
+        --brand-blue: #2563eb;
+        --brand-blue-dark: #1d4ed8;
+        --coral: #38bdf8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #fff;
+        font-family: Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .site-header {
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+      }
+
+      .nav {
+        align-items: center;
+        display: flex;
+        height: 68px;
+        justify-content: space-between;
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: 0 20px;
+      }
+
+      .brand {
+        color: inherit;
+        font-size: 24px;
+        font-weight: 900;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .brand span {
+        color: var(--brand-blue);
+        font-style: italic;
+      }
+
+      .status-pill {
+        align-items: center;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        color: var(--brand-blue-dark);
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 8px;
+        min-height: 34px;
+        padding: 0 12px;
+      }
+
+      .status-dot {
+        background: var(--coral);
+        border-radius: 999px;
+        display: inline-block;
+        height: 8px;
+        width: 8px;
+      }
+
+      .hero {
+        background: var(--soft);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-inner {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.9fr) minmax(300px, 1.1fr);
+        margin: 0 auto;
+        max-width: 1180px;
+        min-height: 430px;
+      }
+
+      .hero-copy {
+        align-self: center;
+        padding: 56px 20px;
+        z-index: 1;
+      }
+
+      .eyebrow {
+        background: var(--brand-blue);
+        color: #fff;
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        padding: 7px 11px;
+      }
+
+      h1 {
+        font-size: clamp(36px, 5vw, 58px);
+        line-height: 1.02;
+        margin: 0 0 16px;
+      }
+
+      .hero-copy p {
+        color: #4b5563;
+        line-height: 1.7;
+        margin: 0 0 26px;
+        max-width: 560px;
+      }
+
+      .button {
+        align-items: center;
+        background: #111;
+        border: 1px solid #111;
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        text-decoration: none;
+      }
+
+      .hero-panel {
+        align-self: stretch;
+        background:
+          linear-gradient(90deg, rgba(239, 246, 255, 0.95), rgba(239, 246, 255, 0.1)),
+          linear-gradient(135deg, #ffffff 0%, #dbeafe 42%, #bae6fd 100%);
+        display: grid;
+        min-height: 320px;
+        padding: 42px 20px;
+        place-items: center;
+      }
+
+      .error-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(191, 219, 254, 0.85);
+        border-radius: 8px;
+        box-shadow: 0 24px 60px rgba(37, 99, 235, 0.14);
+        max-width: 430px;
+        padding: 28px;
+        width: 100%;
+      }
+
+      .error-code {
+        color: var(--brand-blue);
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0 0 10px;
+      }
+
+      .error-card h2 {
+        font-size: 24px;
+        line-height: 1.25;
+        margin: 0 0 12px;
+      }
+
+      .error-card p {
+        color: var(--muted);
+        line-height: 1.65;
+        margin: 0;
+      }
+
+      .benefit-band {
+        background: #fff;
+      }
+
+      .benefits {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(3, 1fr);
+        margin: 0 auto;
+        max-width: 1180px;
+        padding: 34px 20px;
+      }
+
+      .benefit {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .benefit strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .benefit span {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .footer {
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        padding: 22px 20px;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        .nav {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 10px;
+          height: auto;
+          padding: 18px 20px;
+        }
+
+        .hero-inner {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          padding: 44px 20px 30px;
+        }
+
+        .hero-panel {
+          padding: 0 20px 42px;
+        }
+
+        .benefits {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="서비스 안내">
+        <a class="brand" href="/">K-GLOW <span>BEAUTY</span></a>
+        <div class="status-pill">
+          <span class="status-dot" aria-hidden="true"></span>
+          임시 안내 페이지
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <span class="eyebrow">Service Notice</span>
+            <h1>서비스 연결이 원활하지 않습니다</h1>
+            <p>
+              현재 K-GLOW BEAUTY 메인 서비스에 일시적인 문제가 발생했습니다.
+              안정적인 이용을 위해 복구 작업을 진행하고 있습니다.
+            </p>
+            <a class="button" href="/">다시 시도하기</a>
+          </div>
+
+          <div class="hero-panel" aria-label="오류 안내">
+            <section class="error-card">
+              <p class="error-code">TEMPORARY ERROR</p>
+              <h2>잠시 후 다시 접속해주세요.</h2>
+              <p>
+                주문, 회원, 상품 데이터는 안전하게 관리되고 있습니다.
+                문제가 계속되면 관리자에게 문의해주세요.
+              </p>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="benefit-band" aria-label="복구 안내">
+        <div class="benefits">
+          <div class="benefit">
+            <strong>자동 복구 확인</strong>
+            <span>서비스 상태를 계속 확인하며 정상 경로로 복구합니다.</span>
+          </div>
+          <div class="benefit">
+            <strong>안전한 데이터 관리</strong>
+            <span>회원과 주문 정보는 운영 데이터베이스에서 보호됩니다.</span>
+          </div>
+          <div class="benefit">
+            <strong>빠른 재접속</strong>
+            <span>몇 분 뒤 새로고침하거나 다시 시도해주세요.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">© K-GLOW BEAUTY. Temporary service page.</footer>
+  </body>
 </html>

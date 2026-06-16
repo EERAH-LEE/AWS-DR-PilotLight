@@ -17,6 +17,7 @@ output "cloudfront_domain" {
 output "vpn_psk" {
   value     = module.vpn.psk
   sensitive = true
+}
 
 output "ecr_repository_urls" {
   description = "ECR repository URLs by repository name."
