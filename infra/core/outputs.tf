@@ -2,6 +2,16 @@ output "cloudfront_domain" {
   value = module.cloudfront.cloudfront_domain
 }
 
+output "vpn_tunnel1_address" {
+  value     = length(module.vpn) > 0 ? module.vpn[0].tunnel1_address : ""
+  sensitive = false
+}
+
+output "vpn_psk" {
+  value     = length(module.vpn) > 0 ? module.vpn[0].psk : ""
+  sensitive = true
+}
+
 # dr/ 에서 data.terraform_remote_state.core 로 읽어갈 값들
 output "vpc_id" {
   value = module.network.vpc_id
