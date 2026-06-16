@@ -66,8 +66,9 @@ module "dms" {
   # network 모듈에서 받아오는 서브넷 (eks 서브넷 재사용)
   subnet_ids = module.network.eks_subnet_ids
 
-  # 소스: Azure MySQL
-  source_host     = data.external.azure_mysql_ip.result.ip # var.azure_mysql_host 대체
+  # 소스: Azure MySQL -가영잠시수정함
+  #source_host     = data.external.azure_mysql_ip.result.ip # var.azure_mysql_host 대체
+  source_host     = var.azure_mysql_host
   source_username = var.azure_mysql_username
   source_password = var.azure_mysql_password
 
@@ -104,17 +105,19 @@ module "cloudfront" {
   eks_alb_dns = ""
 }
 
-module "vpn" {
-  source    = "./modules/vpn"
-  namespace = local.namespace
-
-  vpc_id                 = module.network.vpc_id
-  private_route_table_id = module.network.private_route_table_id
-
-  # Azure VPN Gateway 퍼블릭 IP
-  azure_vpn_gateway_ip = data.terraform_remote_state.azure.outputs.vpn_gateway_public_ip  # var.azure_vpn_gateway_ip 대체
-
-  # Azure VNet CIDR (MySQL이 속한 대역)
-  azure_vnet_cidr = var.azure_vnet_cidr
-}
+#어플라이때문에 잠깐 주석처리함 -가영
+#module "vpn" {
+#  source    = "./modules/vpn"
+#  namespace = local.namespace
+#
+#  vpc_id                 = module.network.vpc_id
+#  private_route_table_id = module.network.private_route_table_id
+#
+#  # Azure VPN Gateway 퍼블릭 IP -가영 잠시수정
+#  #azure_vpn_gateway_ip = data.terraform_remote_state.azure.outputs.vpn_gateway_public_ip  # var.azure_vpn_gateway_ip 대체
+#  azure_vpn_gateway_ip = var.azure_vpn_gateway_ip
+#
+#  # Azure VNet CIDR (MySQL이 속한 대역)
+#  azure_vnet_cidr = var.azure_vnet_cidr
+#}
 
