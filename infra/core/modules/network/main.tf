@@ -74,3 +74,22 @@ resource "aws_route_table_association" "eks" {
   route_table_id = aws_route_table.private.id
 }
 
+# NAT Gateway용 퍼블릭 서브넷 (DR 시 NAT GW가 여기에 올라감)
+resource "aws_subnet" "public" {
+  count                   = 2
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = local.public_subnet_cidrs[count.index]
+  availability_zone       = local.AZs[count.index]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "subnet-${var.namespace}-public-${count.index + 1}"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
