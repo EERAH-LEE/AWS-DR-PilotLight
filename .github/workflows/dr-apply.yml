@@ -1,12 +1,12 @@
 name: DR Activation
 
 on:
-  workflow_dispatch:  # 담당자가 GitHub Actions 페이지에서 수동으로 실행
+  workflow_dispatch:
 
 jobs:
   dr-apply:
     runs-on: ubuntu-latest
-    environment: dr-production  # GitHub Environment 보호 규칙 설정 가능
+    environment: dr-production
 
     steps:
       - uses: actions/checkout@v4
@@ -15,11 +15,18 @@ jobs:
         with:
           terraform_version: "1.9.0"
 
-      # AWS 자격증명 (GitHub Secrets에 등록)
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-           role-to-assume: ${{ secrets.AWS_DR_ROLE_ARN }}  # core apply 후 출력된 ARN
-           aws-region: ap-northeast-2
+          role-to-assume: ${{ secrets.AWS_DR_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      # DR 승인 시 헬스체크 알람 억제
+      - name: Suppress health check alerts
+        run: |
+          aws lambda update-function-configuration \
+            --function-name fn-azsis-kbeauty-health-checker \
+            --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=true}" \
+            --region ap-northeast-2
 
       # 1단계: dr/ 배포 (NAT GW → ECR → EKS)
       - name: Deploy DR Infrastructure
@@ -72,3 +79,11 @@ jobs:
           terraform apply -auto-approve \
             -var="eks_alb_dns=${{ steps.alb.outputs.alb_dns }}"
 
+      # 7단계: 알람 억제 해제
+      - name: Re-enable health check alerts
+        if: always()
+        run: |
+          aws lambda update-function-configuration \
+            --function-name fn-azsis-kbeauty-health-checker \
+            --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=false}" \
+            --region ap-northeast-2
