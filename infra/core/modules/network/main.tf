@@ -16,7 +16,9 @@ resource "aws_subnet" "eks" {
   availability_zone = local.AZs[count.index]              #[0]=2a존, [1]=2c존
 
   tags = {
-    Name = "subnet-${var.namespace}-eks-${count.index + 1}"
+  Name = "subnet-${var.namespace}-eks-${count.index + 1}"
+  "kubernetes.io/cluster/${var.namespace}-eks" = "shared"
+  "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
@@ -82,8 +84,10 @@ resource "aws_subnet" "public" {
   availability_zone       = local.AZs[count.index]
   map_public_ip_on_launch = true
 
-  tags = {
+   tags = {
     Name = "subnet-${var.namespace}-public-${count.index + 1}"
+    "kubernetes.io/cluster/${var.namespace}-eks" = "shared"
+    "kubernetes.io/role/elb" = "1"
   }
 }
 

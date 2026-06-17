@@ -1,0 +1,12 @@
+services:
+  web:
+    build:
+      context: /home/eerah/final_pj/app/web_blue
+      dockerfile: /home/eerah/final_pj/k8s/web/image_build/blue/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/} # 빌드 시 ARG로 전달, 기본값은 "/"
+    image: final-pj-web-blue:latest
+    container_name: final-pj-web-blue
+    ports:
+      - "${WEB_PORT:-8080}:80" # 호스트의 WEB_PORT 환경변수 사용, 없으면 8080
+    restart: unless-stopped

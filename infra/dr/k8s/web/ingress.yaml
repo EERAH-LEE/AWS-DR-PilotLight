@@ -9,7 +9,9 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
     alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/subnets: subnet-025363371bfccc318,subnet-060934dd7728b7b0d
 spec:
+  ingressClassName: alb
   rules:
     - http:
         paths:
