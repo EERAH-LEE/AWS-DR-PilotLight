@@ -104,6 +104,10 @@ def handler(event, context):
     agw_fqdn = os.environ["AZURE_AGW_FQDN"]
     cw = boto3.client("cloudwatch", region_name="ap-northeast-2")
 
+    if os.environ.get("SUPPRESS_ALERTS") == "true":
+        print("Alert suppression enabled. Skipping health check.")
+        return {"status": "suppressed"}
+
     status = 0  # 기본값: 비정상
 
     try:
@@ -168,6 +172,7 @@ resource "aws_lambda_function" "health_checker" {
     variables = {
       AZURE_AGW_FQDN    = var.azure_agw_fqdn
       SLACK_WEBHOOK_URL = var.slack_webhook_url
+      SUPPRESS_ALERTS   = "false"
     }
   }
 }

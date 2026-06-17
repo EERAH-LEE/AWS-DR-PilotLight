@@ -1,0 +1,89 @@
+name: DR Activation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dr-apply:
+    runs-on: ubuntu-latest
+    environment: dr-production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DR_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      # DR 승인 시 헬스체크 알람 억제
+      - name: Suppress health check alerts
+        run: |
+          aws lambda update-function-configuration \
+            --function-name fn-azsis-kbeauty-health-checker \
+            --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=true}" \
+            --region ap-northeast-2
+
+      # 1단계: dr/ 배포 (NAT GW → ECR → EKS)
+      - name: Deploy DR Infrastructure
+        working-directory: infra/dr
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      # 2단계: kubectl 설정
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+            --region ap-northeast-2 \
+            --name azsis-kbeauty-dr-eks
+
+      # 3단계: ALB Ingress Controller 설치
+      - name: Install ALB Ingress Controller
+        run: |
+          helm repo add eks https://aws.github.io/eks-charts
+          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            -n kube-system \
+            --set clusterName=azsis-kbeauty-dr-eks \
+            --set serviceAccount.create=true
+
+      # 4단계: 앱 배포
+      - name: Deploy Application
+        run: |
+          kubectl apply -f infra/dr/k8s/
+
+      # 5단계: ALB DNS 대기
+      - name: Wait for ALB DNS
+        id: alb
+        run: |
+          for i in $(seq 1 20); do
+            DNS=$(kubectl get ingress -A \
+              -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            if [ -n "$DNS" ]; then
+              echo "alb_dns=$DNS" >> $GITHUB_OUTPUT
+              break
+            fi
+            echo "대기 중... ($i/20)"
+            sleep 30
+          done
+
+      # 6단계: CloudFront에 EKS ALB 주소 등록
+      - name: Update CloudFront with EKS ALB
+        working-directory: infra/core
+        run: |
+          terraform init
+          terraform apply -auto-approve \
+            -var="eks_alb_dns=${{ steps.alb.outputs.alb_dns }}"
+
+      # 7단계: 알람 억제 해제
+      - name: Re-enable health check alerts
+        if: always()
+        run: |
+          aws lambda update-function-configuration \
+            --function-name fn-azsis-kbeauty-health-checker \
+            --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=false}" \
+            --region ap-northeast-2
