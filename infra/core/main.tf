@@ -35,12 +35,6 @@ module "dms" {
   target_password = var.db_password
 }
 
-module "route53" {
-  source = "./modules/route53"
-  namespace = local.namespace
-
-  azure_endpoint = var.azure_endpoint
-}
 
 module "s3" {
   source    = "./modules/s3"
@@ -68,4 +62,15 @@ module "vpn" {
   azure_vnet_cidr        = var.azure_vnet_cidr
 
   count = var.azure_vpn_gateway_ip != "" ? 1 : 0
+}
+
+module "dr_trigger" {
+  source = "./modules/dr_trigger"
+
+  namespace              = local.namespace
+  azure_agw_fqdn         = var.azure_agw_fqdn
+  check_interval_minutes = 5
+  alarm_minutes          = 15
+
+  slack_webhook_url = var.slack_webhook_url
 }
