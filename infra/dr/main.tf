@@ -38,3 +38,13 @@ module "eks" {
   node_security_group_id    = data.terraform_remote_state.core.outputs.eks_node_sg_id
   node_groups               = var.eks_node_groups
 }
+
+resource "aws_security_group_rule" "node_ingress_kubelet_from_eks_cluster_sg" {
+  type                     = "ingress"
+  from_port                = 10250
+  to_port                  = 10250
+  protocol                 = "tcp"
+  security_group_id        = data.terraform_remote_state.core.outputs.eks_node_sg_id
+  source_security_group_id = module.eks.cluster_security_group_id
+  description              = "EKS managed cluster security group to kubelet"
+}
