@@ -43,6 +43,7 @@ resource "aws_s3_bucket_policy" "cf-s3" {
 #전 세계 엣지 서버에 캐싱 + 오리진으로 요청 전달하는 CDN
 #-------------------------------------------------------
 resource "aws_cloudfront_distribution" "main" {
+  aliases = var.aliases
 
   #오리진 1 : s3 - 항상 존재 (점검 페이지)
   origin {
@@ -107,10 +108,12 @@ resource "aws_cloudfront_distribution" "main" {
     geo_restriction { restriction_type = "none" } #지역 제한 없음
   }
 
-  #CF 기본 인증서 사용
-  #커스텀 도메인 쓰려면 ACM 인증서로 교체 필요
+  # 커스텀 도메인을 쓰는 경우 us-east-1 ACM 인증서를 연결한다.
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.acm_certificate_arn == ""
+    acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : null
+    ssl_support_method             = var.acm_certificate_arn != "" ? "sni-only" : null
+    minimum_protocol_version       = var.acm_certificate_arn != "" ? "TLSv1.2_2021" : null
   }
 
   tags = {
