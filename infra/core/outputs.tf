@@ -36,3 +36,8 @@ output "eks_cluster_sg_id" {
 output "eks_node_sg_id" {
   value = module.security.eks_node_sg_id
 }
+
+# 워크플로우에 넣을 Role ARN 출력
+output "github_actions_role_arn" {
+  value = module.github_oidc.github_actions_role_arn
+}

@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      context: /home/eerah/final_pj/k8s/web/image_build/green/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/canary} # /canary 경로의 green WEB API 요청은 green WEB nginx를 거칩니다.
+    image: final-pj-web-green:latest
+    container_name: final-pj-web-green
+    ports:
+      - "${WEB_PORT:-8080}:80" # 호스트의 WEB_PORT 환경변수 사용, 없으면 8080
+    restart: unless-stopped
