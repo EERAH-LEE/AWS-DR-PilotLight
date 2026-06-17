@@ -58,3 +58,4 @@ resource "aws_security_group_rule" "node_ingress_lbc_webhook_from_eks_cluster_sg
   source_security_group_id = module.eks.cluster_security_group_id
   description              = "EKS managed cluster security group to AWS Load Balancer Controller webhook"
 }
+
