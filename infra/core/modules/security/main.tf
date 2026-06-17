@@ -2,13 +2,23 @@
 resource "aws_security_group" "rds" {
     name = "nsg-${var.namespace}-rds"
     vpc_id = var.vpc_id
-
+    
+    #DMS 인스턴스 -> RDS 3306 접속 허용 : DMS  -> RDS : 데이터 복제용
     ingress {
         from_port = 3306
         to_port = 3306
         protocol = "tcp"
         security_groups = [aws_security_group.dms.id] #DMS sg에서만 허용
         description = "MySQL from DMS"
+    }
+    
+    #EKS 노드 / WAS Pod -> RDS 3306 접속 허용 :  WAS  -> RDS : 애플리케이션 실행용
+    ingress {
+        from_port       = 3306
+        to_port         = 3306
+        protocol        = "tcp"
+        security_groups = [aws_security_group.eks_node.id]
+        description     = "MySQL from EKS nodes"
     }
 
     egress {
@@ -121,9 +131,9 @@ resource "aws_security_group" "eks_node" {
     }
 
     egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
 
