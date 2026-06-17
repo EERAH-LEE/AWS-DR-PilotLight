@@ -1,0 +1,16 @@
+services:
+  was:
+    build:
+      context: ../../../..
+      dockerfile: k8s/was/image_build/green/Dockerfile
+      # args:
+        # APP_DIR: app/was_green
+        #WHATAP_DIR: whatap
+    image: final-pj-was-green:latest
+    container_name: final-pj-was-green
+    #environment:
+      #WHATAP_AGENT_PATH: /whatap/whatap.agent-2.2.75.jar
+      #WHATAP_ONAME: monitoring-green
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
