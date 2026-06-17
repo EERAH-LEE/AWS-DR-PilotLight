@@ -21,3 +21,7 @@ output "eks_cluster_endpoint" {
 output "eks_node_group_names" {
   value = module.eks.node_group_names
 }
+
+output "eks_cluster_security_group_id" {
+  value = module.eks.cluster_security_group_id
+}

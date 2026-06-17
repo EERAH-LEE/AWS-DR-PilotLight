@@ -30,20 +30,19 @@ spec:
           env:
             - name: SPRING_DATASOURCE_URL
               valueFrom:
-                 secretKeyRef:
+                secretKeyRef:
                   name: db-secret
                   key: db-url
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
-                 secretKeyRef:
-                   name: db-secret
-                   key: db-user
+                secretKeyRef:
+                  name: db-secret
+                  key: db-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
-                 secretKeyRef:
-                   name: db-secret
-                   key: db-password
-
+                secretKeyRef:
+                  name: db-secret
+                  key: db-password
             - name: SPRING_SESSION_STORE_TYPE
               value: redis
             - name: SPRING_SESSION_REDIS_NAMESPACE
@@ -52,18 +51,18 @@ spec:
               value: 30m
             - name: SPRING_DATA_REDIS_HOST
               valueFrom:
-                 secretKeyRef:
-                   name: redis-secret
-                   key: redis-host
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-host
             - name: SPRING_DATA_REDIS_PORT
               valueFrom:
-                 secretKeyRef:
-                   name: redis-secret
-                   key: redis-ssl-port
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-ssl-port
             - name: SPRING_DATA_REDIS_PASSWORD
               valueFrom:
-                 secretKeyRef:
-                   name: redis-secret
-                   key: redis-password
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
             - name: SPRING_DATA_REDIS_SSL_ENABLED
               value: "true"
