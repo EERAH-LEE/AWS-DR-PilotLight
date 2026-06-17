@@ -107,7 +107,7 @@ def handler(event, context):
     status = 0  # 기본값: 비정상
 
     try:
-        url = f"https://{agw_fqdn}/health"
+        url = f"http://{agw_fqdn}/health"  #https:http
         req = urllib.request.Request(url)
         res = urllib.request.urlopen(req, timeout=10)
 
