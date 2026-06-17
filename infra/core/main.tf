@@ -74,3 +74,10 @@ module "dr_trigger" {
 
   slack_webhook_url = var.slack_webhook_url
 }
+
+module "github_oidc" {
+  source = "./modules/github_oidc"
+
+  namespace   = local.namespace
+  github_repo = "bespin-multi-cloud-3-azure/final_pj_aws"
+}
