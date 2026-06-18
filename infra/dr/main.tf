@@ -27,16 +27,18 @@ module "ecr" {
 module "eks" {
   source = "./eks"
 
-  namespace                 = var.namespace
-  kubernetes_version        = var.eks_kubernetes_version
-  endpoint_public_access    = var.eks_endpoint_public_access
-  endpoint_private_access   = var.eks_endpoint_private_access
-  public_access_cidrs       = var.eks_public_access_cidrs
-  cluster_service_ipv4_cidr = var.eks_service_cidr
-  subnet_ids                = data.terraform_remote_state.core.outputs.eks_subnet_ids
-  cluster_security_group_id = data.terraform_remote_state.core.outputs.eks_cluster_sg_id
-  node_security_group_id    = data.terraform_remote_state.core.outputs.eks_node_sg_id
-  node_groups               = var.eks_node_groups
+  namespace                                   = var.namespace
+  kubernetes_version                          = var.eks_kubernetes_version
+  endpoint_public_access                      = var.eks_endpoint_public_access
+  endpoint_private_access                     = var.eks_endpoint_private_access
+  public_access_cidrs                         = var.eks_public_access_cidrs
+  cluster_service_ipv4_cidr                   = var.eks_service_cidr
+  bootstrap_cluster_creator_admin_permissions = var.eks_bootstrap_cluster_creator_admin_permissions
+  admin_principal_arns                        = var.eks_admin_principal_arns
+  subnet_ids                                  = data.terraform_remote_state.core.outputs.eks_subnet_ids
+  cluster_security_group_id                   = data.terraform_remote_state.core.outputs.eks_cluster_sg_id
+  node_security_group_id                      = data.terraform_remote_state.core.outputs.eks_node_sg_id
+  node_groups                                 = var.eks_node_groups
 }
 
 resource "aws_security_group_rule" "node_ingress_kubelet_from_eks_cluster_sg" {
