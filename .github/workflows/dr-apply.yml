@@ -3,6 +3,10 @@ name: DR Activation
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   dr-apply:
     runs-on: ubuntu-latest
@@ -15,6 +19,17 @@ jobs:
         with:
           terraform_version: "1.9.0"
 
+      - uses: azure/setup-helm@v4
+        with:
+          version: "latest"
+
+      - name: Install eksctl
+        run: |
+          ARCH=amd64
+          PLATFORM="$(uname -s)_${ARCH}"
+          curl -sSL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin/eksctl
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DR_ROLE_ARN }}
@@ -24,7 +39,7 @@ jobs:
       - name: Suppress health check alerts
         run: |
           aws lambda update-function-configuration \
-            --function-name fn-azsis-kbeauty-health-checker \
+            --function-name fn-azsis-kbeauty-dr-health-checker \
             --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=true}" \
             --region ap-northeast-2
 
@@ -45,16 +60,46 @@ jobs:
       # 3단계: ALB Ingress Controller 설치 (EKS ALB 생성용)
       - name: Install ALB Ingress Controller
         run: |
+          eksctl utils associate-iam-oidc-provider \
+            --region ap-northeast-2 \
+            --cluster azsis-kbeauty-dr-eks \
+            --approve
+
+          eksctl delete iamserviceaccount \
+            --cluster azsis-kbeauty-dr-eks \
+            --region ap-northeast-2 \
+            --namespace kube-system \
+            --name aws-load-balancer-controller \
+            --wait || true
+
+          eksctl create iamserviceaccount \
+            --cluster azsis-kbeauty-dr-eks \
+            --region ap-northeast-2 \
+            --namespace kube-system \
+            --name aws-load-balancer-controller \
+            --role-name AmazonEKSLoadBalancerControllerRole \
+            --attach-policy-arn arn:aws:iam::946775837287:policy/AWSLoadBalancerControllerIAMPolicy \
+            --approve \
+            --override-existing-serviceaccounts
+
           helm repo add eks https://aws.github.io/eks-charts
+          helm repo update
           helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
             -n kube-system \
             --set clusterName=azsis-kbeauty-dr-eks \
-            --set serviceAccount.create=true
+            --set region=ap-northeast-2 \
+            --set vpcId=vpc-0edcede2943a173a4 \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=aws-load-balancer-controller
+
+          kubectl rollout status deployment/aws-load-balancer-controller \
+            -n kube-system \
+            --timeout=180s
 
       # 4단계: 앱 배포 (ALB 생성됨)
       - name: Deploy Application
         run: |
-          kubectl apply -f infra/dr/k8s/
+          kubectl apply -k k8s
 
       # 5단계: ALB DNS 확인 (생성까지 대기)
       - name: Wait for ALB DNS
@@ -71,6 +116,11 @@ jobs:
             sleep 30
           done
 
+          if [ -z "$DNS" ]; then
+            echo "ALB DNS was not created in time."
+            exit 1
+          fi
+
       # 6단계: CloudFront에 EKS ALB 주소 등록
       - name: Update CloudFront with EKS ALB
         working-directory: infra/core
@@ -84,6 +134,6 @@ jobs:
         if: always()
         run: |
           aws lambda update-function-configuration \
-            --function-name fn-azsis-kbeauty-health-checker \
+            --function-name fn-azsis-kbeauty-dr-health-checker \
             --environment "Variables={AZURE_AGW_FQDN=${{ secrets.AZURE_AGW_FQDN }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},SUPPRESS_ALERTS=false}" \
             --region ap-northeast-2
