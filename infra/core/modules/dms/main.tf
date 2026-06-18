@@ -105,3 +105,93 @@ resource "aws_dms_replication_task" "main" {
     Name = "task-${var.namespace}"
   }
 }
+
+
+
+
+##############################################################
+###########################역뱡향##############################
+##############################################################
+
+
+# ── 역방향 소스 엔드포인트: AWS RDS ──────────────────────────────
+# 정방향에서는 RDS가 대상이었지만, 역방향에서는 소스가 됨
+# failback 시 RDS에 쌓인 데이터를 Azure MySQL로 보내는 출발점
+resource "aws_dms_endpoint" "source_rds" {
+  endpoint_id   = "source-rds-${var.namespace}"
+  endpoint_type = "source"
+  engine_name   = "mysql"
+
+  server_name   = var.target_endpoint  # 기존 RDS 엔드포인트 변수 재사용
+  port          = 3306
+  username      = var.target_username
+  password      = var.target_password
+  database_name = "kbeauty"
+
+  tags = { Name = "source-rds-${var.namespace}" }
+}
+
+
+# ── 역방향 대상 엔드포인트: Azure MySQL ──────────────────────────
+# 정방향에서는 Azure MySQL이 소스였지만, 역방향에서는 대상이 됨
+# VPN 터널을 통해 Azure private IP(10.0.4.x)로 접근
+resource "aws_dms_endpoint" "target_azure_mysql" {
+  endpoint_id   = "target-azure-mysql-${var.namespace}"
+  endpoint_type = "target"
+  engine_name   = "mysql"
+
+  server_name   = var.source_host      # 기존 Azure MySQL host 변수 재사용
+  port          = 3306
+  username      = var.source_username
+  password      = var.source_password
+  database_name = "kbeauty"
+
+  ssl_mode = "none"  # Azure MySQL require_secure_transport = OFF 상태
+
+  tags = { Name = "target-azure-mysql-${var.namespace}" }
+}
+
+
+# ── 역방향 복제 태스크 ────────────────────────────────────────────
+# DR 시 RDS → Azure MySQL 동기화용
+# 평상시에는 중지 상태로 두고, failback 시에만 시작
+# full-load-and-cdc: 시작 시 RDS 전체 복사 후 변경분 실시간 동기화
+# → binlog 위치 계산 불필요, 언제 시작해도 최신 상태로 맞춰짐
+resource "aws_dms_replication_task" "failback" {
+  replication_task_id      = "task-failback-${var.namespace}"
+  migration_type           = "full-load-and-cdc"
+  replication_instance_arn = aws_dms_replication_instance.main.replication_instance_arn
+  source_endpoint_arn      = aws_dms_endpoint.source_rds.endpoint_arn
+  target_endpoint_arn      = aws_dms_endpoint.target_azure_mysql.endpoint_arn
+
+  table_mappings = jsonencode({
+    rules = [{
+      rule-type   = "selection"
+      rule-id     = "1"
+      rule-name   = "include-all"
+      rule-action = "include"
+      object-locator = {
+        schema-name = "kbeauty"
+        table-name  = "%"
+      }
+    }]
+  })
+
+  replication_task_settings = jsonencode({
+    TargetMetadata = {
+      SupportLobs        = true
+      FullLobMode        = false
+      LimitedSizeLobMode = true
+      LobMaxSize         = 32
+    }
+    FullLoadSettings = {
+      # Azure MySQL에 기존 데이터 있을 수 있으므로 TRUNCATE 후 로드
+      TargetTablePrepMode = "TRUNCATE_BEFORE_LOAD"
+    }
+    Logging = {
+      EnableLogging = true
+    }
+  })
+
+  tags = { Name = "task-failback-${var.namespace}" }
+}

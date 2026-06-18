@@ -51,7 +51,7 @@ module "cloudfront" {
   aliases                = ["www.sue019522.shop"]
   acm_certificate_arn    = "arn:aws:acm:us-east-1:946775837287:certificate/331d02d7-2d43-4606-8d44-8bc0e6456dad"
 
-  eks_alb_dns = ""
+  eks_alb_dns = "k8s-appweb-webalb-ea82ed7c51-1781580546.ap-northeast-2.elb.amazonaws.com"
 }
 
 module "vpn" {
