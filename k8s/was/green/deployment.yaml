@@ -43,26 +43,3 @@ spec:
                 secretKeyRef:
                   name: db-secret
                   key: db-password
-            - name: SPRING_SESSION_STORE_TYPE
-              value: redis
-            - name: SPRING_SESSION_REDIS_NAMESPACE
-              value: kbeauty:session
-            - name: SERVER_SERVLET_SESSION_TIMEOUT
-              value: 30m
-            - name: SPRING_DATA_REDIS_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: redis-secret
-                  key: redis-host
-            - name: SPRING_DATA_REDIS_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: redis-secret
-                  key: redis-ssl-port
-            - name: SPRING_DATA_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: redis-secret
-                  key: redis-password
-            - name: SPRING_DATA_REDIS_SSL_ENABLED
-              value: "true"
