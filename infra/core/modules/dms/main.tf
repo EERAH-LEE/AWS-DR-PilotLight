@@ -118,7 +118,7 @@ resource "aws_dms_replication_task" "main" {
 # 정방향에서는 RDS가 대상이었지만, 역방향에서는 소스가 됨
 # failback 시 RDS에 쌓인 데이터를 Azure MySQL로 보내는 출발점
 resource "aws_dms_endpoint" "source_rds" {
-  endpoint_id   = "source-rds-${var.namespace}"
+  endpoint_id   = "source-aws-rds-${var.namespace}"
   endpoint_type = "source"
   engine_name   = "mysql"
 
