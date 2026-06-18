@@ -12,8 +12,8 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "main" {
   identifier = "mysql-${var.namespace}"
   engine = "mysql"
-  engine_version = "8.0"
-  instance_class = "db.t3.small"
+  engine_version = local.engine_version
+  instance_class = local.instance_class
   allocated_storage = 20
 
   db_name = var.db_name
@@ -25,6 +25,8 @@ resource "aws_db_instance" "main" {
 
   skip_final_snapshot = true #테스트용, 삭제 시 스냅샷 안찍음
   parameter_group_name = aws_db_parameter_group.main.name
+  apply_immediately = local.apply_immediately
+  backup_retention_period = local.backup_retention_period  
 
 
   tags = {
@@ -42,7 +44,7 @@ resource "aws_db_parameter_group" "main" {
   # 커넥션 수 제한 증가 (DMS + 앱 동시 접속 대비)
   parameter {
     name  = "max_connections"
-    value = "200"
+    value = local.max_connections
   }
 
   # DMS CDC가 읽을 수 있는 바이너리 로그 형식 (ROW 필수)
