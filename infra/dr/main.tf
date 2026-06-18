@@ -59,3 +59,17 @@ resource "aws_security_group_rule" "node_ingress_lbc_webhook_from_eks_cluster_sg
   description              = "EKS managed cluster security group to AWS Load Balancer Controller webhook"
 }
 
+#eks endpoint 자동으로 동기화되는 테라폼코드임
+resource "null_resource" "update_kubeconfig" {
+  depends_on = [module.eks]
+
+  triggers = {
+    cluster_name = module.eks.cluster_name
+    endpoint     = module.eks.cluster_endpoint
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
+    command     = "$env:Path='C:\\Program Files\\Amazon\\AWSCLIV2;' + $env:Path; aws eks update-kubeconfig --region ap-northeast-2 --name ${module.eks.cluster_name}"
+  }
+}
