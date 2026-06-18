@@ -44,6 +44,9 @@ variable "eks_bootstrap_cluster_creator_admin_permissions" {
 }
 
 variable "eks_admin_principal_arns" {
+  # EKS 클러스터 생성자 외에 kubectl/Argo CD 등록 권한을 줄 IAM user/role ARN 목록입니다.
+  # 현재 예시는 sue AWS profile의 IAM user ARN입니다.
+  # 다른 계정/role을 쓰려면 `aws sts get-caller-identity --profile <profile>`의 Arn 값을 넣습니다.
   type    = list(string)
   default = ["arn:aws:iam::946775837287:user/sue"]
 }
