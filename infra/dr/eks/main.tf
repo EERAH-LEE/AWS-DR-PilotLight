@@ -17,7 +17,7 @@ resource "aws_eks_cluster" "this" {
 
   access_config {
     authentication_mode                         = "API_AND_CONFIG_MAP"
-    bootstrap_cluster_creator_admin_permissions = true
+    bootstrap_cluster_creator_admin_permissions = var.bootstrap_cluster_creator_admin_permissions
   }
 
   enabled_cluster_log_types = [
@@ -33,6 +33,29 @@ resource "aws_eks_cluster" "this" {
   }
 
   depends_on = [aws_iam_role_policy_attachment.cluster]
+}
+
+# EKS 클러스터 생성자 외에 kubectl/Argo CD 등록에 사용할 IAM principal을 admin으로 등록한다.
+# bootstrap_cluster_creator_admin_permissions는 생성자만 자동 admin으로 만들기 때문에,
+# 다른 AWS profile/user/role은 access entry와 access policy를 별도로 연결해야 한다.
+resource "aws_eks_access_entry" "admin" {
+  for_each = toset(var.admin_principal_arns)
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  for_each = aws_eks_access_entry.admin
+
+  cluster_name  = aws_eks_cluster.this.name
+  principal_arn = each.value.principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
 }
 
 resource "aws_launch_template" "node" {
