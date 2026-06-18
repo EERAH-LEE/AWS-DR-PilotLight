@@ -22,6 +22,15 @@ variable "cluster_service_ipv4_cidr" {
   type = string
 }
 
+variable "bootstrap_cluster_creator_admin_permissions" {
+  type = bool
+}
+
+variable "admin_principal_arns" {
+  type    = list(string)
+  default = []
+}
+
 variable "subnet_ids" {
   type = list(string)
 }
