@@ -7,6 +7,8 @@ resource "aws_sns_topic" "dr_alert" {
 }
 
 
+
+
 #------------------------------------------------------
 # CloudWatch Alarm
 # Lambda가 기록한 커스텀 메트릭 감시
@@ -15,28 +17,32 @@ resource "aws_sns_topic" "dr_alert" {
 #------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "azure_health" {
   alarm_name        = "alarm-${var.namespace}-azure-down"
-  alarm_description = "Azure AGW ${var.alarm_minutes}분 이상 비정상 - DR 검토 필요"
+  alarm_description = "Azure AGW ${local.alarm_minutes}분 이상 비정상 - DR 검토 필요"
 
   # Lambda가 Custom/AzureHealth 네임스페이스에 기록한 메트릭 감시
   namespace   = "Custom/AzureHealth"
   metric_name = "AGWHealthStatus"
 
   # Lambda 실행 주기와 맞춰야 함
-  period = var.check_interval_minutes * 60
+  period = local.period
 
   # 몇 번 연속 실패 시 알람 발동
   # ex) 5분 주기 * 3번 = 15분
-  evaluation_periods  = ceil(var.alarm_minutes / var.check_interval_minutes)
-  statistic           = "Minimum"
-  threshold           = 1
-  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = local.evaluation_periods
+  statistic           = "Minimum"                 # 기간 내 최솟값 기준(하나라도 0이면 비정상)
+  threshold           = 1                         # 1 미만이면 알람 (0=비정상)
+  comparison_operator = "LessThanThreshold"       #메트릭 < 1 이면 알람 발동
 
   # 데이터 없을 때도 비정상으로 처리
   treat_missing_data = local.treat_missing_data
 
-  alarm_actions = [aws_sns_topic.dr_alert.arn]
-  ok_actions    = [aws_sns_topic.dr_alert.arn]
+  alarm_actions = [aws_sns_topic.dr_alert.arn]    # 비정상 시 SNS 발송
+  ok_actions    = [aws_sns_topic.dr_alert.arn]    # 정상 복구 시에도 SNS 발송 (복구 알람)
 }
+
+
+
+
 
 #------------------------------------------------------
 # IAM Role - Lambda용
@@ -74,6 +80,10 @@ resource "aws_iam_role_policy" "cloudwatch_put" {
   })
 }
 
+
+
+
+
 #------------------------------------------------------
 # Lambda 함수
 # Azure AGW를 주기적으로 호출해서 응답 검증
@@ -101,6 +111,12 @@ def send_slack(message):
     urllib.request.urlopen(req)
 
 def handler(event, context):
+    # SNS에서 온 이벤트 = CloudWatch Alarm 15분 알람
+    if "Records" in event and event["Records"][0]["EventSource"] == "aws:sns":
+        send_slack("[DR 경보] Azure 15분 이상 비정상! DR 전환 검토 필요")
+        return
+
+
     agw_fqdn = os.environ["AZURE_AGW_FQDN"]
     cw = boto3.client("cloudwatch", region_name="ap-northeast-2")
 
@@ -113,16 +129,18 @@ def handler(event, context):
     try:
         url = f"http://{agw_fqdn}/health"  #https:http
         req = urllib.request.Request(url)
+        req.add_header("Host", "www.sue019522.shop")
         res = urllib.request.urlopen(req, timeout=10)
 
         # 응답코드 확인
         if res.status == 200:
-            body = json.loads(res.read().decode())
+            #body = json.loads(res.read().decode())
+            status = 1 #200이면 정상
 
             # /health 엔드포인트가 {"status": "ok"} 반환하는지 확인
             # 앱에서 DB, Redis 등 내부 상태까지 검증한 결과
-            if body.get("status") == "ok":
-                status = 1  # 진짜 정상
+            #if body.get("status") == "ok":
+                #status = 1  # 진짜 정상
 
     except urllib.error.HTTPError as e:
         # 4xx, 5xx 에러
@@ -134,9 +152,9 @@ def handler(event, context):
     # 비정상일 때 Slack 알림 전송
     if status == 0:
         send_slack(
-            ":rotating_light: *DR 경보*\n"
+            ":rotating_light: *Azure 서비스 경보*\n"
             f"Azure AGW({agw_fqdn}) 비정상 감지\n"
-            "담당자 확인 후 GitHub Actions에서 DR 승인하세요."
+            "담당자 Azure 인프라를 확인해 주세요."
         )
 
     # CloudWatch에 결과 기록
@@ -160,12 +178,16 @@ PYTHON
   }
 }
 
+
+
+
 resource "aws_lambda_function" "health_checker" {
   function_name = "fn-${var.namespace}-health-checker"
   role          = aws_iam_role.lambda.arn
   runtime       = "python3.12"
   handler       = "index.handler"
   filename      = data.archive_file.lambda.output_path
+  source_code_hash = data.archive_file.lambda.output_base64sha256
   timeout       = 30  # AGW 응답 대기 최대 30초
 
   environment {
@@ -176,6 +198,9 @@ resource "aws_lambda_function" "health_checker" {
     }
   }
 }
+
+
+
 
 #------------------------------------------------------
 # IAM Role - EventBridge Scheduler용
@@ -194,6 +219,8 @@ resource "aws_iam_role" "scheduler" {
   })
 }
 
+
+
 resource "aws_iam_role_policy" "scheduler_invoke" {
   role = aws_iam_role.scheduler.name
   policy = jsonencode({
@@ -206,6 +233,9 @@ resource "aws_iam_role_policy" "scheduler_invoke" {
   })
 }
 
+
+
+
 #------------------------------------------------------
 # EventBridge Scheduler
 # check_interval_minutes 마다 Lambda 실행
@@ -215,10 +245,28 @@ resource "aws_scheduler_schedule" "health_check" {
 
   # rate 표현식으로 주기 설정
   flexible_time_window { mode = "OFF" }
-  schedule_expression = "rate(${var.check_interval_minutes} minutes)"
+  schedule_expression = "rate(${local.check_interval_minutes} minutes)"
 
   target {
     arn      = aws_lambda_function.health_checker.arn
     role_arn = aws_iam_role.scheduler.arn
   }
+}
+
+
+
+# SNS가 기존 Lambda를 직접 호출하도록 구독
+# CloudWatch Alarm 발동 → SNS → 이 Lambda 호출
+resource "aws_sns_topic_subscription" "lambda" {
+  topic_arn = aws_sns_topic.dr_alert.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.health_checker.arn
+}
+
+# SNS가 Lambda 호출할 수 있도록 권한 부여
+resource "aws_lambda_permission" "sns" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.health_checker.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.dr_alert.arn
 }

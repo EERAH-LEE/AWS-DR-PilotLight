@@ -10,19 +10,6 @@ variable "azure_agw_fqdn" {
 
 
 
-
-# 헬스체크 주기 (분)
-variable "check_interval_minutes" {
-  type    = number
-  default = 5
-}
-
-# 장애 판단 기준 (분)
-variable "alarm_minutes" {
-  type    = number
-  default = 15
-}
-
 # Slack Incoming Webhook URL
 variable "slack_webhook_url" {
   type      = string
