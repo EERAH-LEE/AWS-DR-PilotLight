@@ -72,8 +72,7 @@ module "dr_trigger" {
 
   namespace              = local.namespace
   azure_agw_fqdn         = var.azure_agw_fqdn
-  check_interval_minutes = 5
-  alarm_minutes          = 15
+  
 
   slack_webhook_url = var.slack_webhook_url
 }
