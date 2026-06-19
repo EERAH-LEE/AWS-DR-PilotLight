@@ -32,7 +32,7 @@ resource "aws_cloudwatch_metric_alarm" "azure_health" {
   comparison_operator = "LessThanThreshold"
 
   # 데이터 없을 때도 비정상으로 처리
-  treat_missing_data = "breaching"
+  treat_missing_data = local.treat_missing_data
 
   alarm_actions = [aws_sns_topic.dr_alert.arn]
   ok_actions    = [aws_sns_topic.dr_alert.arn]
@@ -172,7 +172,7 @@ resource "aws_lambda_function" "health_checker" {
     variables = {
       AZURE_AGW_FQDN    = var.azure_agw_fqdn
       SLACK_WEBHOOK_URL = var.slack_webhook_url
-      SUPPRESS_ALERTS   = "false"
+      SUPPRESS_ALERTS   = tostring(local.SUPPRESS_ALERTS)
     }
   }
 }

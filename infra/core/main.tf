@@ -50,8 +50,9 @@ module "cloudfront" {
   bucket_regional_domain = module.s3.bucket_regional_domain
   aliases                = ["www.sue019522.shop"]
   acm_certificate_arn    = "arn:aws:acm:us-east-1:946775837287:certificate/331d02d7-2d43-4606-8d44-8bc0e6456dad"
-
-  eks_alb_dns = ""
+  
+  #eks주소를 CF 등록
+  eks_alb_dns = var.eks_alb_dns
 }
 
 module "vpn" {
