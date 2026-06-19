@@ -21,6 +21,16 @@ resource "aws_security_group" "rds" {
         description     = "MySQL from EKS nodes"
     }
 
+        # Bastion EC2 -> RDS 3306 접속 허용 : 관리용
+    ingress {
+        from_port       = 3306
+        to_port         = 3306
+        protocol        = "tcp"
+        security_groups = ["sg-0d8be26ac46acd56e"] # ← EC2에 붙은 SG ID로 교체
+        description     = "MySQL from Bastion EC2"
+    }
+
+
     egress {
         from_port = 0
         to_port = 0
