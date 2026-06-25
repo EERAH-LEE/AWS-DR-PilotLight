@@ -23,7 +23,7 @@ spec:
         purpose: web-was
       containers:
         - name: was
-          image: 946775837287.dkr.ecr.ap-northeast-2.amazonaws.com/azsis-kbeauty-dr/was-blue:blue-766f08e
+          image: 946775837287.dkr.ecr.ap-northeast-2.amazonaws.com/azsis-kbeauty-dr/was-blue:blue-whatap-aws
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
