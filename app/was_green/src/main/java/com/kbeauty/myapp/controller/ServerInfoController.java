@@ -27,6 +27,8 @@ public class ServerInfoController {
     private static final long DB_HOST_CACHE_TTL_MILLIS = 10 * 60_000;
     private static final int METADATA_TIMEOUT_MILLIS = 250;
     private static final String APP_COLOR = "green";
+    private static final String AWS_METADATA_BASE_URL = "http://169.254.169.254/latest";
+    private static final String AZURE_METADATA_BASE_URL = "http://169.254.169.254/metadata/instance";
 
     private final DataSource dataSource;
     private Map<String, String> cachedServerInfo;
@@ -46,10 +48,12 @@ public class ServerInfoController {
         }
 
         Map<String, String> info = new LinkedHashMap<>();
+        String cloudProvider = valueOrDefault(System.getenv("CLOUD_PROVIDER"), detectCloudProvider());
         info.put("appColor", APP_COLOR);
+        info.put("cloudProvider", cloudProvider);
+        info.put("cloudZone", getCloudZone(cloudProvider));
         info.put("hostName", getHostName());
         info.put("serverIp", getServerIp());
-        info.put("azureZone", getAzureZone());
         info.put("dbHost", getCachedDbHost(now));
 
         cachedServerInfo = info;
@@ -75,7 +79,7 @@ public class ServerInfoController {
 
     private String getAzureZone() {
         try {
-            URL url = new URL("http://169.254.169.254/metadata/instance/compute/zone?api-version=2021-02-01&format=text");
+            URL url = new URL(AZURE_METADATA_BASE_URL + "/compute/zone?api-version=2021-02-01&format=text");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Metadata", "true");
@@ -91,6 +95,80 @@ public class ServerInfoController {
         } catch (Exception e) {
             return "Error or Non-Azure: " + e.getMessage();
         }
+    }
+
+    private String getAwsZone() {
+        String zone = getAwsMetadata("meta-data/placement/availability-zone");
+        return valueOrDefault(zone, "N/A (Local/Non-AWS)");
+    }
+
+    private String detectCloudProvider() {
+        if (getAwsMetadata("meta-data/placement/availability-zone") != null) {
+            return "AWS";
+        }
+
+        String azureZone = getAzureZone();
+        if (!azureZone.startsWith("Error") && !azureZone.startsWith("N/A")) {
+            return "Azure";
+        }
+
+        return "Unknown";
+    }
+
+    private String getAwsMetadata(String path) {
+        try {
+            String token = getAwsMetadataToken();
+            if (token == null) {
+                return null;
+            }
+
+            URL url = new URL(AWS_METADATA_BASE_URL + "/" + path);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("X-aws-ec2-metadata-token", token);
+            conn.setConnectTimeout(METADATA_TIMEOUT_MILLIS);
+            conn.setReadTimeout(METADATA_TIMEOUT_MILLIS);
+
+            if (conn.getResponseCode() == 200) {
+                try (Scanner scanner = new Scanner(conn.getInputStream(), "UTF-8").useDelimiter("\\A")) {
+                    return scanner.hasNext() ? scanner.next() : null;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getAwsMetadataToken() {
+        try {
+            URL url = new URL(AWS_METADATA_BASE_URL + "/api/token");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("X-aws-ec2-metadata-token-ttl-seconds", "60");
+            conn.setConnectTimeout(METADATA_TIMEOUT_MILLIS);
+            conn.setReadTimeout(METADATA_TIMEOUT_MILLIS);
+
+            if (conn.getResponseCode() == 200) {
+                try (Scanner scanner = new Scanner(conn.getInputStream(), "UTF-8").useDelimiter("\\A")) {
+                    return scanner.hasNext() ? scanner.next() : null;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getCloudZone(String cloudProvider) {
+        String configuredZone = System.getenv("CLOUD_ZONE");
+        if (configuredZone != null && !configuredZone.isBlank()) {
+            return configuredZone;
+        }
+        if ("AWS".equalsIgnoreCase(cloudProvider)) {
+            return getAwsZone();
+        }
+        return "Azure".equalsIgnoreCase(cloudProvider) ? getAzureZone() : "N/A";
     }
 
     private String getDbHost() {
