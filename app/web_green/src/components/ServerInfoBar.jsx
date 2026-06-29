@@ -13,9 +13,10 @@ export default function ServerInfoBar() {
 
   useEffect(() => {
     const fallback = {
+      cloudProvider: "Unknown",
+      cloudZone: "N/A",
       hostName: window.location.hostname || "local-file",
       serverIp: "확인 중",
-      azureZone: "N/A (Local/Non-Azure)",
       dbHost: "확인 중",
     };
 
@@ -78,9 +79,10 @@ export default function ServerInfoBar() {
   return (
     <div className="server-info">
       <div className="server-info-inner">
+        <InfoItem label="Cloud" value={info.cloudProvider} />
         <InfoItem label="Host Name" value={info.hostName} />
         <InfoItem label="Server IP" value={info.serverIp} />
-        <InfoItem label="Azure Zone" value={info.azureZone} />
+        <InfoItem label="Region / Zone" value={info.cloudZone || info.azureZone} />
         <InfoItem label="DB Host" value={info.dbHost} />
         <div className="server-info-item session-check">
           <strong>Session</strong>
